@@ -1,4 +1,4 @@
-/* KerbalSimpitHelloWorld
+/* KerbalSimpit
    A very barebones Hello World sketch, that doesn't require
    any extra hardware. It periodically sends EchoRequest packets
    to the game, and uses the EchoReply packets to switch the
@@ -12,7 +12,7 @@
 
 // Declare a KerbalSimpit object that will
 // communicate using the "Serial" device.
-KerbalSimpit mySimpit(Serial);
+KerbalSimpit ftlCockpit(Serial);
 
 // This boolean tracks the desired LED state.
 bool state = false;
@@ -31,16 +31,16 @@ void setup() {
   digitalWrite(LED_BUILTIN, HIGH);
   // This loop continually attempts to handshake with the plugin.
   // It will keep retrying until it gets a successful handshake.
-  while (!mySimpit.init()) {
+  while (!ftlCockpit.init()) {
     delay(100);
   }
   // Turn off the built-in LED to indicate handshaking is complete.
   digitalWrite(LED_BUILTIN, LOW);
   // Display a message in KSP to indicate handshaking is complete.
-  mySimpit.printToKSP("Connected", PRINT_TO_SCREEN);
+  ftlCockpit.printToKSP("Connected", PRINT_TO_SCREEN);
   // Sets our callback function. The KerbalSimpit library will
   // call this function every time a packet is received.
-  mySimpit.inboundHandler(messageHandler);
+  ftlCockpit.inboundHandler(messageHandler);
 }
 
 void loop() {
@@ -50,9 +50,9 @@ void loop() {
     // If the last message was "high", send "low"
     // and vice-versa.
     if (state) {
-      mySimpit.send(ECHO_REQ_MESSAGE, "low", 4);
+      ftlCockpit.send(ECHO_REQ_MESSAGE, "low", 4);
     } else {
-      mySimpit.send(ECHO_REQ_MESSAGE, "high", 5);
+      ftlCockpit.send(ECHO_REQ_MESSAGE, "high", 5);
     }
     // Update when we last sent a message.
     lastSent = now;
@@ -60,7 +60,7 @@ void loop() {
     state = !state;
   }
   // Call the library update() function to check for new messages.
-  mySimpit.update();
+  ftlCockpit.update();
 }
 
 void messageHandler(byte messageType, byte msg[], byte msgSize) {
