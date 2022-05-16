@@ -5,11 +5,15 @@
 #include "KerbalSimpit.h"
 
 // Input setup
-const int SAS_SWITCH_PIN = 3; // the pin used for controlling SAS.
+#define SAS_PIN 3 // SAS button pin to control state
+#define SAS_LED 8 // SAS LED pin
+int sasLastState;
+int sasCurrentState;
 
+// Store the current action status, as recevied by simpit
 byte currentActionStatus = 0;
 
-// Declare a KerbalSimpit object that will communicate using the "Serial" device.
+// Declare a KerbalSimpit object that will communicate using the "Serial" device
 KerbalSimpit ftlCockpit(Serial);
 
 // This boolean tracks the desired LED state.
@@ -20,10 +24,6 @@ unsigned long lastSent = 0;
 // How often to send echo packets (in ms)
 unsigned int sendInterval = 1000;
 
-// SAS button state
-int sasLastState = 0;
-
-
 void setup() {
   // Open the serial connection.
   Serial.begin(115200);
@@ -33,8 +33,8 @@ void setup() {
   digitalWrite(LED_BUILTIN, HIGH);
 
   // Set up the switch with builtin pullup.
-  pinMode(SAS_SWITCH_PIN, INPUT_PULLUP);
-  
+  pinMode(SAS_PIN, INPUT_PULLUP);
+  pinMode(SAS_LED, OUTPUT);
   // This loop continually attempts to handshake with the plugin.
   // It will keep retrying until it gets a successful handshake.
   while (!ftlCockpit.init()) {
@@ -74,20 +74,22 @@ void loop() {
   }
   
   // Get the SAS switch state
-  int sas_switch_state = digitalRead(SAS_SWITCH_PIN);
+  sasLastState = sasCurrentState;
+  sasCurrentState = digitalRead(SAS_PIN);
 
   // Update the SAS to match the state, only if a change is needed to avoid
   // spamming commands.
-  if(sas_switch_state != sasLastState){
-    if(sas_switch_state && !(currentActionStatus & SAS_ACTION)){
+  if(sasLastState != sasCurrentState){
+    if(sasCurrentState && !(currentActionStatus & SAS_ACTION)){
       ftlCockpit.printToKSP("Activate SAS!");
       ftlCockpit.activateAction(SAS_ACTION);
+      digitalWrite(SAS_LED, HIGH);
     }
-    else if(!sas_switch_state && (currentActionStatus & SAS_ACTION)){
+    else if(sasCurrentState && (currentActionStatus & SAS_ACTION)){
       ftlCockpit.printToKSP("Desactivate SAS!");
       ftlCockpit.deactivateAction(SAS_ACTION);
+      digitalWrite(SAS_LED, LOW);
     }
-    sasLastState = !sasLastState;
   }
 
   // Delay for debouncing -> change to milis
